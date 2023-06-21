@@ -42,7 +42,7 @@ ufo_data_original <- readRDS(ufo_path)
 
 ```{r}
 #Import and Tidying of Drug Deaths Dataset
-drug_od_counts <- read_csv("./VSRR_Provisional_Drug_Overdose_Death_Counts.csv") |>
+drug_od_counts <- read_csv("/users/daniel.fagerland/desktop/ /school/Data Science Practicum/Practicum/VSRR_Provisional_Drug_Overdose_Death_Counts.csv") |>
   filter(Year == "2022",
          Indicator == "Number of Deaths" | Indicator == "Number of Drug Overdose Deaths") |> 
   select(State, Year, Month, Indicator, `Data Value`) |>
@@ -161,12 +161,13 @@ plot_usmap(data = drugs_and_aliens,
                                     "#6e9598",
                                     "#557076",
                                     "#4c4c67")) +
-  geom_point(data = abnormal_cities, aes(x = x, y = y, size = sightings), color = "white") +
+  geom_point(data = abnormal_cities, aes(x = x, y = y, size = sightings, color = sightings)) +
   labs(title = "UFO Sightings Correspond to Drug Abuse, \nUS, 2022",
-       subtitle = "Dots display cities with UFO sightings (bigger dots for more sightings). \nColors show number of drug overdoses",
+       subtitle = "Dots display cities with UFO sightings (bigger, lighter dots for more sightings). \nColors show number of drug overdoses",
        caption = "UFO Citings data from Tidy Tuesday, Drug overdose data from the CDC, 2023. \nR^2 = 0.8279, Significant at 0.0001 significance level.",
        fill = "Drug Overdoses") +
-  guides(size = F) +
+  guides(size = F,
+         color = F) +
   theme(plot.background = element_rect("black"),
         plot.title = element_text(family = "serif", 
                              color = "white",
