@@ -1,0 +1,273 @@
+---
+title: "tidy Tuesday"
+format: html
+editor: visual
+---
+
+```{r}
+ # Get the Data
+
+# Read in with tidytuesdayR package 
+# Install from CRAN via: install.packages("tidytuesdayR")
+# This loads the readme and all the datasets for the week of interest
+
+# Either ISO-8601 date or year/week works!
+
+tuesdata <- tidytuesdayR::tt_load('2023-06-20')
+tuesdata <- tidytuesdayR::tt_load(2023, week = 25)
+
+ufo_sightings <- tuesdata$`ufo_sightings`
+places <- tuesdata$`places`
+day_parts_map <- tuesdata$`day_parts_map`
+
+# Or read in the data manually
+
+ufo_sightings <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2023/2023-06-20/ufo_sightings.csv')
+places <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2023/2023-06-20/places.csv')
+day_parts_map <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2023/2023-06-20/day_parts_map.csv')
+```
+
+```{r}
+# All packages used in this script:
+library(tidyverse)
+library(here)
+library(withr)
+
+url <- "https://github.com/jonthegeek/apis/raw/main/data/data_ufo_reports_with_day_part.rds"
+ufo_path <- withr::local_tempfile(fileext = ".rds")
+download.file(url, ufo_path)
+
+ufo_data_original <- readRDS(ufo_path)
+
+# We need to make the csv small enough that github won't choke. We'll pull out
+# some of the joined data back into separate tables.
+
+ufo_sightings <- ufo_data_original |> 
+  dplyr::select(
+    reported_date_time:city,
+    state, 
+    country_code,
+    shape:has_images,
+    day_part
+  ) |> 
+  # This got normalized after the data was saved, re-normalize.
+  dplyr::mutate(
+    shape = tolower(shape)
+  )
+
+places <- ufo_data_original |>
+  dplyr::select(
+    city:country_code, 
+    latitude:elevation_m
+  ) |> 
+  dplyr::distinct()
+
+# We'll also provide the map of "day parts" in case anybody wants to do
+# something with that.
+url2 <- "https://github.com/jonthegeek/apis/raw/main/data/data_day_parts_map.rds"
+day_parts_path <- withr::local_tempfile(fileext = ".rds")
+download.file(url2, day_parts_path)
+
+day_parts_map <- readRDS(day_parts_path)
+
+readr::write_csv(
+  ufo_sightings,
+  here::here(
+    "data",
+    "2023",
+    "2023-06-20",
+    "ufo_sightings.csv"
+  )
+)
+
+readr::write_csv(
+  places,
+  here::here(
+    "data",
+    "2023",
+    "2023-06-20",
+    "places.csv"
+  )
+)
+
+readr::write_csv(
+  day_parts_map,
+  here::here(
+    "data",
+    "2023",
+    "2023-06-20",
+    "day_parts_map.csv"
+  )
+)
+```
+
+```{r}
+
+world_coordinates <- map_data("world")
+
+
+
+cord_el <- ufo_data_original|>
+  select(duration_seconds, longitude, latitude, shape)|>
+  filter(duration_seconds < 7200)|>
+  view()|>
+  drop_na()
+  
+ggplot() +
+
+geom_map(
+	data = world_coordinates, map = world_coordinates,
+	aes(long, lat, map_id = region),
+	color = "white", fill = "grey", size = 0.3
+) + 
+  geom_point(data = cord_el,
+             mapping = aes(x = longitude,
+                           y = latitude,
+                           color = duration_seconds),
+             size = 0.5) + 
+  scale_color_gradient(low = "lightblue",
+                       high = "darkblue")
+
+```
+
+```{r}
+world_coordinates <- map_data("world")
+
+
+
+cord_el <- ufo_data_original|>
+  select(duration_seconds, longitude, latitude, posted_date)|>
+  filter(duration_seconds < 7200,
+         posted_date >= as.Date("2022-01-01") & posted_date < as.Date("2023-01-01"))|>
+  view()|>
+  drop_na()
+  
+ggplot() +
+
+geom_map(
+	data = world_coordinates, map = world_coordinates,
+	aes(long, lat, map_id = region),
+	color = "white", fill = "grey", size = 0.3
+) + 
+  geom_point(data = cord_el,
+             mapping = aes(x = longitude,
+                           y = latitude,
+                           color = posted_date),
+             size = 0.5) + 
+  scale_color_gradient(low = "lightblue",
+                       high = "darkblue")
+
+```
+
+```{r}
+ufo_data_original|>
+  drop_na(duration_seconds, elevation_m)|>
+  filter(duration_seconds < 7200 & duration_seconds > 5)|>
+  view()|>
+  ggplot() + 
+  geom_jitter(mapping = aes(x = duration_seconds,
+                           y = elevation_m))
+```
+
+```{r}
+ufo_data_original|>
+  group_by(shape)|>
+  drop_na()|>
+  summarize(count = n()) -> shape_count
+  
+  shape_count|>
+    filter(count > 100)|>
+    
+    ggplot()+ 
+    geom_col(mapping = aes(y = shape,
+                           x = count),
+             orientation = "y")
+    
+```
+
+```{r}
+ufo_data_original|>
+  group_by(posted_date)|>
+  drop_na()|>
+  summarize(count = n()) -> case_count
+
+case_count |>
+  ggplot(mapping = aes(x = posted_date,
+                          y = count)) + 
+  geom_point() + 
+  geom_smooth()
+  
+  
+```
+
+```{r}
+ufo_data_original|>
+  group_by(country)|>
+  drop_na()|>
+  summarise(count = n())|>
+  view()
+  
+```
+
+```{r}
+
+
+world_coordinates|>
+  filter(region == "USA", long < -50 & long > -135,
+         lat < 50 & lat > 20) -> USA_coordinates
+
+ufo_data_original|>
+  filter(country == "USA", longitude < -50 & longitude > -135,
+         latitude < 50 & latitude > 20)|>
+ggplot() +
+
+geom_map(
+	data = USA_coordinates, map = USA_coordinates,
+	aes(long, lat, map_id = region),
+	color = "#005C53", fill = "#005C53", size = 0.3
+) + 
+  geom_jitter(mapping = aes(
+    x = longitude,
+    y = latitude,
+    color = posted_date
+  ),
+  alpha = 0.5,
+  size = 0.1
+              )+
+  scale_color_gradient(high = "yellow",
+                       low = "red")+
+theme(plot.background = element_rect("#D6D58E"),
+      panel.background = element_rect("#D6D58E"))
+
+
+
+
+```
+
+```{r}
+ufo_data_original$reported_date_time_utc <- format(as.POSIXct(ufo_data_original$reported_date_time_utc), format = "%H:%M:%S")
+```
+
+```{r}
+ufo_data_original$reported_date_time_utc <- hms(ufo_data_original$reported_date_time_utc)
+```
+
+```{r}
+ufo_data_original$reported_date_time_utc <- as.duration(ufo_data_original$reported_date_time_utc)
+```
+
+```{r}
+
+ufo_data_original|>
+  filter(country == "USA", longitude < -50 & longitude > -135,
+         latitude < 50 & latitude > 20)|>
+
+plot_usmap(regions = "counties") +
+  theme(panel.background=element_blank()) + 
+  ggplot()+
+  geom_jitter(mapping = aes(
+    x = longitude,
+    y = latitude
+  ))
+  
+```
