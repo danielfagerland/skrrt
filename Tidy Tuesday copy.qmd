@@ -1,0 +1,190 @@
+---
+title: "Tidy Tuesday"
+format: html
+editor: visual
+---
+
+```{r}
+library(tidyverse)
+library(usmap)
+library(janitor)
+library(sf)
+```
+
+```{r}
+# Get the Data
+
+# Read in with tidytuesdayR package 
+# Install from CRAN via: install.packages("tidytuesdayR")
+# This loads the readme and all the datasets for the week of interest
+
+# Either ISO-8601 date or year/week works!
+
+tuesdata <- tidytuesdayR::tt_load('2023-06-20')
+tuesdata <- tidytuesdayR::tt_load(2023, week = 25)
+
+ufo_sightings <- tuesdata$`ufo_sightings`
+places <- tuesdata$`places`
+day_parts_map <- tuesdata$`day_parts_map`
+
+# Or read in the data manually
+
+ufo_sightings <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2023/2023-06-20/ufo_sightings.csv')
+places <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2023/2023-06-20/places.csv')
+day_parts_map <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2023/2023-06-20/day_parts_map.csv')
+url <- "https://github.com/jonthegeek/apis/raw/main/data/data_ufo_reports_with_day_part.rds"
+ufo_path <- withr::local_tempfile(fileext = ".rds")
+download.file(url, ufo_path)
+
+ufo_data_original <- readRDS(ufo_path)
+
+```
+
+```{r}
+#Import and Tidying of Drug Deaths Dataset
+drug_od_counts <- read_csv("./VSRR_Provisional_Drug_Overdose_Death_Counts.csv") |>
+  filter(Year == "2022",
+         Indicator == "Number of Deaths" | Indicator == "Number of Drug Overdose Deaths") |> 
+  select(State, Year, Month, Indicator, `Data Value`) |>
+  pivot_wider(names_from = Indicator, 
+              values_from = `Data Value`) |>
+  clean_names() |>
+  group_by(state) |>
+  summarize(drug_deaths = sum(number_of_drug_overdose_deaths),
+          deaths = sum(number_of_deaths)) |>
+  mutate(prop_deaths = drug_deaths / deaths) 
+
+```
+
+```{r}
+state_sightings <- ufo_data_original |>
+  filter(country_code == "US",
+         reported_date_time >= ymd("2021-1-31"),
+         reported_date_time <= ymd("2022-12-31") ) |>
+  group_by(state) |>
+  summarize(population = sum(population), sightings = n()) |>
+  mutate(prop_sightings = sightings / population) 
+```
+
+```{r}
+ 
+ plot_usmap(data = state_sightings,
+            include = .new_england,
+            regions = "state",
+             values = "sightings",
+             labels = T) +
+   scale_fill_gradientn(colors = c("#9fee98", 
+                                    "#85bda2",
+                                    "#6e9598",
+                                    "#557076",
+                                    "#4c4c67")) +
+   labs(title = "Number of UFO Sightings by State",
+        subtitle = "New England, 2022",
+        fill = "Count") +
+   theme(panel.background = element_rect("black"),
+         plot.background = element_rect("black"), 
+         legend.background = element_rect("black"),
+         legend.text = element_text(color = "white"),
+         plot.title = element_text(family = "serif", 
+                                   color = "white",
+                                   size = 17),
+         plot.subtitle = element_text(family = "serif", 
+                                      color = "white",
+                                      size = 13),
+         legend.title = element_text(family = "serif", 
+                                     color = "white"),
+         aspect.ratio = 4/3)
+```
+
+```{r}
+ggsave()
+```
+
+```{r}
+  plot_usmap(data = drugs_and_aliens,
+             regions = "state",
+             values = "drug_deaths") +
+    scale_fill_gradient(low = "yellow",
+                        high = "red")
+```
+
+```{r}
+#Join drug deaths and UFO sightings
+drugs_and_aliens <- left_join(state_sightings,
+          drug_od_counts,
+          by = "state") 
+#Make a plot to show the relationship
+drugs_and_aliens |>
+  ggplot(aes(x = drug_deaths,
+                 y = sightings)) +
+  geom_point() +
+  geom_smooth(method = "lm", 
+              se = FALSE, 
+              color = "#4c4c67")
+#Run linear regression to determine singificant relationship
+reg <- lm(sightings ~ drug_deaths, data = drugs_and_aliens)
+summary(reg)
+```
+
+```{r}
+drugs_and_aliens |>
+  ggplot(aes(x = prop_deaths, 
+             y = prop_sightings)) +
+  geom_point() + 
+  geom_smooth(method = "lm")
+```
+
+Create heatmap of US, with addition of hotspot cities.
+
+```{r}
+transformed_ufo <- ufo_data_original |>
+  filter(country_code == "US") |>
+  usmap_transform(c("longitude", "latitude")) 
+
+```
+
+```{r}
+abnormal_cities <- transformed_ufo |>
+  group_by(x, y) |>
+  summarize(sightings = n()) |>
+#  arrange(desc(sightings)) |>
+  filter(sightings > 50)
+```
+
+```{r}
+plot_usmap(data = drugs_and_aliens,
+            regions = "state",
+             values = "drug_deaths",
+             labels = F) +
+   scale_fill_gradientn(colors = c("#9fee98", 
+                                    "#85bda2",
+                                    "#6e9598",
+                                    "#557076",
+                                    "#4c4c67")) +
+  geom_point(data = abnormal_cities, aes(x = x, y = y, size = sightings), color = "white") +
+  labs(title = "UFO Sightings Correspond to Drug Abuse, \nUS, 2022",
+       subtitle = "Dots display cities with UFO sightings (bigger dots for more sightings). \nColors show number of drug overdoses",
+       caption = "UFO Citings data from Tidy Tuesday, Drug overdose data from the CDC, 2023. \nR^2 = 0.8279, Significant at 0.0001 significance level.",
+       fill = "Drug Overdoses") +
+  guides(size = F) +
+  theme(plot.background = element_rect("black"),
+        plot.title = element_text(family = "serif", 
+                             color = "white",
+                             size = 22,
+                             hjust = 0.5),
+        plot.subtitle = element_text(family = "serif", 
+                             color = "white",
+                             size = 12,
+                             hjust = 0.5),
+        plot.caption = element_text(family = "serif", 
+                             color = "white",
+                             size = 8),
+        legend.background = element_rect("black", color = "#6e9598"),
+        legend.text = element_text(color = "white"),
+        legend.title = element_text(color = "white"))
+```
+
+```{r}
+ggsave("Drugs_and_aliens_plot.pdf",
+       device = pdf) 
+```
