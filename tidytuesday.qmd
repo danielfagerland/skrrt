@@ -110,7 +110,6 @@ world_coordinates <- map_data("world")
 cord_el <- ufo_data_original|>
   select(duration_seconds, longitude, latitude, shape)|>
   filter(duration_seconds < 7200)|>
-  view()|>
   drop_na()
   
 ggplot() +
@@ -126,7 +125,23 @@ geom_map(
                            color = duration_seconds),
              size = 0.5) + 
   scale_color_gradient(low = "lightblue",
-                       high = "darkblue")
+                       high = "darkblue") + 
+  labs(title = "UFO Sightings and Duration",
+        subtitle = "World Map",
+        fill = "Count") + 
+  theme(panel.background = element_rect("black"),
+         plot.background = element_rect("black"), 
+         legend.background = element_rect("black"),
+         legend.text = element_text(color = "white"),
+         plot.title = element_text(family = "serif", 
+                                   color = "white",
+                                   size = 17),
+         plot.subtitle = element_text(family = "serif", 
+                                      color = "white",
+                                      size = 13),
+         legend.title = element_text(family = "serif", 
+                                     color = "white"))
+  
 
 ```
 
@@ -139,7 +154,6 @@ cord_el <- ufo_data_original|>
   select(duration_seconds, longitude, latitude, posted_date)|>
   filter(duration_seconds < 7200,
          posted_date >= as.Date("2022-01-01") & posted_date < as.Date("2023-01-01"))|>
-  view()|>
   drop_na()
   
 ggplot() +
@@ -155,18 +169,48 @@ geom_map(
                            color = posted_date),
              size = 0.5) + 
   scale_color_gradient(low = "lightblue",
-                       high = "darkblue")
-
+                       high = "darkblue") + 
+  labs(title = "UFO Sightings 2022 - 2023",
+        subtitle = "World Map, Newer the Darker",
+        fill = "Count") + 
+  theme(panel.background = element_rect("black"),
+         plot.background = element_rect("black"), 
+         legend.background = element_rect("black"),
+         legend.text = element_text(color = "white"),
+         plot.title = element_text(family = "serif", 
+                                   color = "white",
+                                   size = 17),
+         plot.subtitle = element_text(family = "serif", 
+                                      color = "white",
+                                      size = 13),
+         legend.title = element_text(family = "serif", 
+                                     color = "white"),
+        legend.position = "none")
 ```
 
 ```{r}
 ufo_data_original|>
   drop_na(duration_seconds, elevation_m)|>
   filter(duration_seconds < 7200 & duration_seconds > 5)|>
-  view()|>
+  #view()|>
   ggplot() + 
   geom_jitter(mapping = aes(x = duration_seconds,
-                           y = elevation_m))
+                           y = elevation_m)) + 
+   labs(title = "Elevation vs Duration",
+        subtitle = "for all of the years",
+        fill = "Count") +
+   theme(panel.background = element_rect("grey"),
+         plot.background = element_rect("grey"), 
+         legend.background = element_rect("grey"),
+         legend.text = element_text(color = "white"),
+         plot.title = element_text(family = "serif", 
+                                   color = "white",
+                                   size = 17),
+         plot.subtitle = element_text(family = "serif", 
+                                      color = "white",
+                                      size = 13),
+         legend.title = element_text(family = "serif", 
+                                     color = "white"))
 ```
 
 ```{r}
