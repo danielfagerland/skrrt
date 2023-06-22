@@ -225,7 +225,22 @@ ufo_data_original|>
     ggplot()+ 
     geom_col(mapping = aes(y = shape,
                            x = count),
-             orientation = "y")
+             orientation = "y")+
+    labs(title = "Most common shape for UFO",
+        subtitle = "In the World",
+        fill = "Count") +
+   theme(panel.background = element_rect("#6e9598"),
+         plot.background = element_rect("#6e9598"), 
+         legend.background = element_rect("#6e9598"),
+         legend.text = element_text(color = "white"),
+         plot.title = element_text(family = "serif", 
+                                   color = "white",
+                                   size = 17),
+         plot.subtitle = element_text(family = "serif", 
+                                      color = "white",
+                                      size = 13),
+         legend.title = element_text(family = "serif", 
+                                     color = "white"))
     
 ```
 
@@ -239,7 +254,24 @@ case_count |>
   ggplot(mapping = aes(x = posted_date,
                           y = count)) + 
   geom_point() + 
-  geom_smooth()
+  geom_smooth(color = "white") + 
+  labs(title = "UFO cases on the time scale",
+        subtitle = "In the World",
+        fill = "Count") +
+   theme(panel.background = element_rect("#6e9598"),
+         plot.background = element_rect("#6e9598"), 
+         legend.background = element_rect("#6e9598"),
+         legend.text = element_text(color = "white"),
+         plot.title = element_text(family = "serif", 
+                                   color = "white",
+                                   size = 17),
+         plot.subtitle = element_text(family = "serif", 
+                                      color = "white",
+                                      size = 13),
+         legend.title = element_text(family = "serif", 
+                                     color = "white"))
+    
+  
   
   
 ```
@@ -249,7 +281,6 @@ ufo_data_original|>
   group_by(country)|>
   drop_na()|>
   summarise(count = n())|>
-  view()
   
 ```
 
@@ -286,32 +317,4 @@ theme(plot.background = element_rect("#D6D58E"),
 
 
 
-```
-
-```{r}
-ufo_data_original$reported_date_time_utc <- format(as.POSIXct(ufo_data_original$reported_date_time_utc), format = "%H:%M:%S")
-```
-
-```{r}
-ufo_data_original$reported_date_time_utc <- hms(ufo_data_original$reported_date_time_utc)
-```
-
-```{r}
-ufo_data_original$reported_date_time_utc <- as.duration(ufo_data_original$reported_date_time_utc)
-```
-
-```{r}
-
-ufo_data_original|>
-  filter(country == "USA", longitude < -50 & longitude > -135,
-         latitude < 50 & latitude > 20)|>
-
-plot_usmap(regions = "counties") +
-  theme(panel.background=element_blank()) + 
-  ggplot()+
-  geom_jitter(mapping = aes(
-    x = longitude,
-    y = latitude
-  ))
-  
 ```
