@@ -225,13 +225,14 @@ ufo_data_original|>
     ggplot()+ 
     geom_col(mapping = aes(y = shape,
                            x = count),
+             fill  = "white",
              orientation = "y")+
     labs(title = "Most common shape for UFO",
-        subtitle = "In the World",
+        subtitle = "Based on DATA since 1998",
         fill = "Count") +
-   theme(panel.background = element_rect("#6e9598"),
-         plot.background = element_rect("#6e9598"), 
-         legend.background = element_rect("#6e9598"),
+   theme(panel.background = element_rect("grey40"),
+         plot.background = element_rect("grey40"), 
+         legend.background = element_rect("grey40"),
          legend.text = element_text(color = "white"),
          plot.title = element_text(family = "serif", 
                                    color = "white",
@@ -240,7 +241,14 @@ ufo_data_original|>
                                       color = "white",
                                       size = 13),
          legend.title = element_text(family = "serif", 
-                                     color = "white"))
+                                     color = "white"),
+         axis.title.x = element_text(color = "white"),
+         axis.text = element_text(color = "white"),
+         panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+         plot.caption = element_text(color = "white",
+                                     size = 5))+ 
+          labs(y= "", x = "Total Cases",
+               caption = "Graph created by Tomas Goncharenko depicting the most popular shape of UFO since 1998. The data was sourced from Tidy Tuesday.")
     
 ```
 
@@ -258,6 +266,8 @@ case_count |>
   labs(title = "UFO cases on the time scale",
         subtitle = "In the World",
         fill = "Count") +
+  labs(y= "cases per day", x = "x axis name") + 
+  
    theme(panel.background = element_rect("#6e9598"),
          plot.background = element_rect("#6e9598"), 
          legend.background = element_rect("#6e9598"),
@@ -299,7 +309,7 @@ ggplot() +
 geom_map(
 	data = USA_coordinates, map = USA_coordinates,
 	aes(long, lat, map_id = region),
-	color = "#005C53", fill = "#005C53", size = 0.3
+	color = "white", fill = "white", size = 0.3
 ) + 
   geom_jitter(mapping = aes(
     x = longitude,
@@ -309,12 +319,52 @@ geom_map(
   alpha = 0.5,
   size = 0.1
               )+
+  
   scale_color_gradient(high = "yellow",
                        low = "red")+
-theme(plot.background = element_rect("#D6D58E"),
-      panel.background = element_rect("#D6D58E"))
-
+   labs(title = "UFO cases in USA since 1998",
+        subtitle = "Lighter points represent more recent citings",
+        fill = "Count") +
+  scale_fill_discrete(labels = c("Control", "Treatment 1", "Treatment 2")) + 
+  theme(
+    panel.background = element_rect("grey80"),
+         plot.background = element_rect("grey80"), 
+         legend.background = element_rect("grey80"),
+         legend.text = element_text(color = "grey10"),
+         plot.title = element_text(family = "serif", 
+                                   color = "grey10",
+                                   size = 17),
+         plot.subtitle = element_text(family = "serif", 
+                                      color = "grey10",
+                                      size = 13),
+      plot.subtitle = element_text(family = "serif", 
+                                      color = "white",
+                                      size = 13),
+     plot.subtitle = element_text(family = "serif", 
+                                      color = "white",
+                                      size = 13),
+         legend.position = "none") +
+   labs(y= "", x = "",
+        caption = "Graph created by Tomas Goncharenko depicting UFO across United States since 1998. The data was sourced from Tidy Tuesday.")
 
 
 
 ```
+
+-   A title that concisely describes the major pattern shown
+
+-   A subtitle that adds a bit more context ([see Wilke\'s chapter on titles and subtitles for more info](https://clauswilke.com/dataviz/figure-titles-captions.html "https://clauswilke.com/dataviz/figure-titles-captions.html"))
+
+-   A caption that includes information about the data source and gives you author credit
+
+-   At least two of the following (choose the two that make the most sense for your plot):
+
+    -   A custom color palette
+
+    -   Custom axis breaks and tick mark labels (consider learning about the [{scales} package](https://scales.r-lib.org "https://scales.r-lib.org/") for easy axis labeling)
+
+    -   Text annotations to highlight important data points (most appropriate for scatter and line plots)
+
+-   A non-default theme
+
+    -   You can use one of the built-in themes, or you can create your own using the theme() function ([see here](https://ggplot2-book.org/themes.html#modifying-theme-components "https://ggplot2-book.org/themes.html#modifying-theme-components") for more guidance on creating fully custom themes)
